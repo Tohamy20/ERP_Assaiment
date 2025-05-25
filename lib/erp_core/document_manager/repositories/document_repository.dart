@@ -1,38 +1,51 @@
-import 'dart:io';
+import 'dart:io' as io;
 import 'dart:typed_data';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show kIsWeb, kDebugMode;
 import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
-import 'package:universal_html/html.dart' as html;  // Add this import
+import 'package:universal_html/html.dart';
 
 class DocumentRepository {
+  // In-memory map for web file simulation
+  final Map<String, Uint8List> _webStorage = {};
 
-  Future<String> _getStoragePath() async {
-    final directory = await getApplicationDocumentsDirectory();
-    return '${directory.path}/erp_documents';
-  }
-
- Future<String> storeFile(Uint8List bytes, String fileName) async {
+  /// Stores a file and returns its path (real on mobile/desktop, simulated on web)
+  Future<String> storeFile(Uint8List bytes, String fileName) async {
     if (kIsWeb) {
-      // Web-specific handling (e.g., upload to server)
-      return _handleWebStorage(bytes, fileName);
-    } else {
-      // Mobile/Desktop storage
-      final dir = await getApplicationDocumentsDirectory();
-      final path = '${dir.path}/erp_documents/$fileName';
-      await File(path).writeAsBytes(bytes);
-      return path;
+      final id = 'doc_${DateTime.now().millisecondsSinceEpoch}';
+      _webStorage[id] = bytes;
+
+      final simulatedPath = 'web_memory_storage/$id/$fileName';
+      print('📁 Simulated saving file to: $simulatedPath');  // <-- add this line
+      return simulatedPath;
+    }
+
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final path = '${directory.path}/erp_document';
+      final file = io.File('$path/$fileName');
+      
+        print('📁 Saving file to: $path');
+       // <-- This logs where it's being saved
+
+      await io.Directory(path).create(recursive: true);
+      await file.writeAsBytes(bytes);
+
+      return file.path;
+    } catch (e) {
+      throw Exception('Failed to store file: $e');
     }
   }
-   Future<String> _handleWebStorage(Uint8List bytes, String fileName) async {
-    // Example: Trigger file download for web
-    final blob = html.Blob([bytes]);
-    final url = html.Url.createObjectUrlFromBlob(blob);
-    final anchor = html.AnchorElement(href: url)
-      ..download = fileName
-      ..click();
-    html.Url.revokeObjectUrl(url);
-    
-    return 'web_storage/$fileName'; // Return a reference
+
+  /// Fetch a file from web storage by simulated path
+  Uint8List? getFileFromWebStorage(String simulatedPath) {
+    if (!kIsWeb) return null;
+
+    // Extract ID from simulated path
+    final parts = simulatedPath.split('/');
+    if (parts.length >= 3) {
+      final id = parts[1];
+      return _webStorage[id];
+    }
+    return null;
   }
 }

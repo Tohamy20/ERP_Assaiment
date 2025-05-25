@@ -5,8 +5,10 @@ import 'package:erpflutter/erp_core/document_manager/models/document_model.dart'
 import 'package:erpflutter/erp_core/document_manager/repositories/document_repository.dart';
 import 'package:erpflutter/erp_core/document_manager/validation/file_type_validator.dart';
 import 'package:erpflutter/erp_core/document_manager/validation/validation_error.dart';
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import 'package:logging/logging.dart';
+import 'package:path_provider/path_provider.dart'; 
 
 class FileUploadSDK {
   final DocumentRepository repository;
@@ -88,12 +90,55 @@ class FileUploadSDK {
   }
 
   Future<String> _storeFile(Uint8List bytes, String fileName) async {
-    try {
-      return await repository.storeFile(bytes as Uint8List, fileName);
-    } catch (e) {
-      throw RepositoryException('File storage failed: ${e.toString()}');
-    }
+  
+  if (kIsWeb) {
+    // Simulate storage in-memory or remote storage via HTTP POST
+    final simulatedPath = 'web_storage/$fileName';
+    // You could also use a map or cache to store it
+    return simulatedPath;
   }
+  else{
+     // Mobile/Desktop: use path_provider
+  final directory = await getApplicationDocumentsDirectory(); // this is the line that crashes on web
+  final path = '${directory.path}/erp_document';
+  final file = File('$path/$fileName');
+
+  await Directory(path).create(recursive: true);
+  await file.writeAsBytes(bytes);
+
+  return file.path;
+  }
+  
+  
+  
+  try {
+
+
+
+    // Get app document directory
+    final appDocDir = await getApplicationDocumentsDirectory();
+
+    // Define subdirectory path
+    final folderPath = Directory('${appDocDir.path}/erp_document');
+
+    // Ensure the folder exists
+    if (!await folderPath.exists()) {
+      await folderPath.create(recursive: true);
+    }
+
+    // Define full file path
+    final filePath = '${folderPath.path}/$fileName';
+
+    // Write the bytes to file
+    final file = File(filePath);
+    await file.writeAsBytes(bytes);
+
+    return file.path;
+  } catch (e) {
+    throw RepositoryException('File storage failed: ${e.toString()}');
+  }
+}
+
 
   Document _createDocument({
     required String fileName,

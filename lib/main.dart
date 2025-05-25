@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:logging/logging.dart';
+import 'package:universal_html/html.dart';
 import 'package:uuid/uuid.dart';
 
 // Core components
@@ -14,7 +16,10 @@ import 'erp_core/folder_manager/sdk/folder_manager_sdk.dart';
 void _setupLogging() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}');
+    if (kDebugMode) {
+      print('${record.level.name}: ${record.time}: ${record.message}');
+    }
+    
     if (record.error != null) print('Error: ${record.error}');
     if (record.stackTrace != null) print('StackTrace: ${record.stackTrace}');
   });
