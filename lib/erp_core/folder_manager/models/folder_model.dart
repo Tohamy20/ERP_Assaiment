@@ -1,5 +1,6 @@
 
 import 'package:equatable/equatable.dart';
+import 'package:erpflutter/erp_core/access_control/permission_level.dart';
 import 'package:uuid/uuid.dart';
 
 class Folder extends Equatable {
@@ -10,6 +11,7 @@ class Folder extends Equatable {
   final DateTime updatedAt;
   final List<String> children;
   final String? parentName;
+  final Map<String, PermissionLevel> permissions;
 
   Folder({
     String? id,
@@ -19,16 +21,18 @@ class Folder extends Equatable {
     DateTime? createdAt,
     DateTime? updatedAt,
     this.parentName,
+    this.permissions = const {},
   })  : id = id ?? Uuid().v4(),
         children = children ?? [],
         createdAt = createdAt ?? DateTime.now(),
         updatedAt = updatedAt ?? DateTime.now();
 
-  Folder copyWith({
+   Folder copyWith({
     String? name,
     String? parentId,
     List<String>? children,
     String? parentName,
+    Map<String, PermissionLevel>? permissions,
   }) {
     return Folder(
       id: id,
@@ -38,9 +42,10 @@ class Folder extends Equatable {
       createdAt: createdAt,
       updatedAt: DateTime.now(),
       parentName: parentName ?? this.parentName,
+      permissions: permissions ?? this.permissions,
     );
   }
 
-  @override
-  List<Object?> get props => [id, name, parentId, createdAt, updatedAt, children];
+ @override
+  List<Object?> get props => [id, name, parentId, createdAt, updatedAt, children, permissions];
 }

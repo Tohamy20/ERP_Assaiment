@@ -1,3 +1,7 @@
+import 'package:erpflutter/erp_core/access_control/access_control_repository.dart';
+import 'package:erpflutter/erp_core/access_control/access_control_sdk.dart';
+import 'package:erpflutter/erp_core/access_control/auth_service.dart';
+import 'package:erpflutter/erp_core/access_control/ui/login_screen.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -32,8 +36,16 @@ void main() {
   runApp(
     MultiProvider(
       providers: [
+        // Add auth provider
+         Provider(create: (_) => AuthService()), // Add this // Your authentication service
         Provider(create: (_) => DocumentRepository()),
         Provider(create: (_) => FolderRepository()),
+         Provider(create: (_) => AccessControlRepository()), // New
+        Provider(
+          create: (context) => AccessControlSDK( // New
+            repository: context.read<AccessControlRepository>(),
+          ),
+        ),
         Provider(
           create: (context) => FileUploadSDK(
             repository: context.read<DocumentRepository>(),
@@ -60,9 +72,11 @@ class MyApp extends StatelessWidget {
       title: 'ERP Document Manager',
       theme: _buildAppTheme(),
       debugShowCheckedModeBanner: false,
-      initialRoute: '/folders',
+       initialRoute: '/login', // Changed from '/folders'
       routes: {
+        '/login': (context) => const LoginScreen(),
         '/folders': (context) => const FolderListScreen(),
+       // '/folders': (context) => const FolderListScreen(),
         '/upload': (context) => const UploadPage(),
       },
       onGenerateRoute: (settings) {

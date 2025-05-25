@@ -1,3 +1,4 @@
+import 'package:erpflutter/erp_core/access_control/permission_level.dart';
 import 'package:erpflutter/erp_core/folder_manager/models/folder_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -18,6 +19,7 @@ class FolderRepository {
     );
   }
 
+
   String _toJson(Folder folder) {
     return [
       folder.id,
@@ -26,6 +28,7 @@ class FolderRepository {
       folder.children.join(','),
       folder.createdAt.toIso8601String(),
       folder.updatedAt.toIso8601String(),
+      _encodePermissions(folder.permissions),
     ].join('|');
   }
 
@@ -39,6 +42,24 @@ class FolderRepository {
       children: parts[3].split(',').where((c) => c.isNotEmpty).toList(),
       createdAt: DateTime.parse(parts[4]),
       updatedAt: DateTime.parse(parts[5]),
+      permissions: parts.length > 6 ? _decodePermissions(parts[6]) : {},
     );
   }
-}
+
+String _encodePermissions(Map<String, PermissionLevel> permissions) {
+    return permissions.entries
+        .map((e) => '${e.key}:${e.value.index}')
+        .join(',');
+  }
+
+  Map<String, PermissionLevel> _decodePermissions(String input) {
+    if (input.isEmpty) return {};
+    return Map.fromEntries(input.split(',').map((entry) {
+      final parts = entry.split(':');
+      return MapEntry(
+        parts[0],
+        PermissionLevel.values[int.parse(parts[1])],
+      );
+    }));
+  }
+}  

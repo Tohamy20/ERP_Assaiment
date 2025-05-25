@@ -1,4 +1,6 @@
 import 'dart:typed_data';
+import 'package:erpflutter/erp_core/access_control/access_control_sdk.dart';
+import 'package:erpflutter/erp_core/access_control/permission_level.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
@@ -74,9 +76,15 @@ class _UploadPageState extends State<UploadPage> {
         tags: tags,
         folderId: widget.currentFolderId,
       );
+      final accessSDK = context.read<AccessControlSDK>();
+    await accessSDK.assignPermission(
+      documentId: uploaded.id, // Use actual uploaded doc ID
+      userId: 'current_user_id', // Get from auth system
+      permission: PermissionLevel.edit,
+    );
 
       setState(() {
-        _uploadResult = 'Upload successful: ${uploaded.filePath}';
+        _uploadResult = 'Upload successful + permissions set: ${uploaded.filePath}';
         _selectedFile = null;
         _fileBytes = null;
         _titleController.clear();
